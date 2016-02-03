@@ -1,0 +1,199 @@
+<style type='text/css'>
+* {
+	padding: 0px;
+	margin: 0px;
+	-webkit-touch-callout: none;
+}
+
+a:link {
+	text-decoration: none;
+}
+</style>
+<script src="mraid.js"></script>
+<style>
+body {
+	background: #FFF;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+a img {
+	border: 0;
+}
+
+.container {
+	position: relative;
+	overflow: hidden;
+}
+
+.banner {
+	position: relative;
+	
+	width: 100%;
+	height: 100%;
+}
+
+.open, .close {
+	width: 29px;
+	height: 29px;
+	position: absolute;
+	right: 15px;
+	top: 13px;
+}
+
+</style>
+<div id="ontrace"></div>
+<div id="container">
+	<div class="" id="normal" style="display: none">
+	
+		<div class="banner" id="banner">
+			<div class="open"></div>
+			<img src="http://fm.p0y.cn/m/extension/yaoyiyaoDemo/banner.png">
+		</div>
+	</div>
+	<div class="expand" id="expanded" style="display: none">
+		<div id="close" class="close"></div>
+		<div class="content">
+		</div>
+	</div>
+</div>
+<script>
+
+	var isopen = false;
+	(function() {
+		var $ = function(name) {
+			return document.getElementById(name) || new Object();
+		}
+		var setSite = (function() {
+			var items = document.getElementsByTagName("a");
+			new Array().forEach.call(items, function(el) {
+				el.addEventListener("click", function(e) {
+					var e = e || window.event;
+					if (e && e.preventDefault) {
+						e.preventDefault();
+					} else {
+						window.event.returnValue = false
+					}
+					var url = this.href;
+					mraid.open(url);
+					return false;
+				})
+			})
+		})()
+		var collapse = function() {
+			mraid.close();
+		}
+		function expand() {
+			var size = mraid.getScreenSize();
+
+			mraid.setExpandProperties({
+				"width" : size.width,
+				"height" : size.height,
+				"useCustomClose" : true
+			});
+			mraid.expand();
+		}
+		window.addEventListener("orientationchange", function() {
+			if (mraid.getState() == "expanded") {
+				collapse();
+			}
+		})
+
+		var setupViewport = function(width) {
+			var element = document.querySelector("meta[name=viewport]");
+			if (!element) {
+				element = document.createElement("meta");
+				element.name = "viewport";
+				element.content = "width=" + width + ", user-scalable=no";
+				document.getElementsByTagName('head')[0].appendChild(element);
+			} else {
+				element.content = "width=" + width + ", user-scalable=no";
+			}
+		}
+		
+		var toggleLayer = function(fromLayer, toLayer) {
+				 
+			var fromElem = $(fromLayer);
+			fromElem.style.display = 'none';
+			var toElem = $(toLayer);
+			toElem.style.display = '';
+		}
+		
+		var updateAd = function(state) {
+		
+			if(isopen == false){
+				toggleLayer('expanded', 'normal');
+				window.location.href = "http://www.ipinyou.com";
+				isopen = true;
+				collapse();
+			}
+		}
+		
+		var mraidReady = function() {
+			mraid.removeEventListener("ready", mraidReady);
+
+			showMyAd();
+		}
+		var showMyAd = function() {
+			var el = $("normal");
+			el.style.display = '';
+			mraid.addEventListener("stateChange", updateAd);
+		}
+		var init = (function() {
+		
+			isopen = false;
+			if (mraid.getState() == "loading") {
+				mraid.addEventListener("ready", mraidReady)
+			} else {
+				showMyAd();
+			}
+			setupViewport(320);
+		})();
+
+		$("banner").addEventListener("click", function() {
+			expand();
+			toggleLayer('normal', 'expanded');
+		});
+		$("close").addEventListener("click", function() {
+			collapse();
+			toggleLayer('expanded', 'normal');
+		});
+		var SHAKE_THRESHOLD = 800;
+		var last_update = 0;
+		var x, y, z, last_x = 0, last_y = 0, last_z = 0;
+
+		function deviceMotionHandler(eventData) {
+			var acceleration = eventData.accelerationIncludingGravity;
+			var curTime = new Date().getTime();
+			if ((curTime - last_update) > 10) {
+				var diffTime = curTime - last_update;
+				last_update = curTime;
+				x = acceleration.x;
+				y = acceleration.y;
+				z = acceleration.z;
+				var speed = Math.abs(x + y + z - last_x - last_y - last_z)
+						/ diffTime * 10000;
+
+				//if (speed > SHAKE_THRESHOLD) {
+				//	expand();
+				//	toggleLayer('normal', 'expanded');
+				//}
+				
+				if(isopen == false){
+					expand();
+					toggleLayer('normal', 'expanded');
+				}
+				last_x = x;
+				last_y = y;
+				last_z = z;
+			}
+		}
+		if (window.DeviceMotionEvent) {
+			window.addEventListener('devicemotion', deviceMotionHandler, false);
+		}
+
+	})()
+</script>
